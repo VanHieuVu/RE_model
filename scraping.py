@@ -3,6 +3,8 @@ import math
 import requests
 from bs4 import BeautifulSoup
 import datetime
+#import psycopg2
+
 
 def RE(type):
     url = f'https://www.bezrealitky.com/listings/offer-sale/{type}/praha?project%5B0%5D=0&_token=-HKI6vzp8ntTC6xqEKy6cxISqsYFJ-79TQZcHWtiFUY&submit=1'
@@ -123,4 +125,6 @@ def RE(type):
 
     #Save df in google drive
     date = datetime.datetime.today().strftime('%Y-%m-%d')
+    
+    
     return(df.to_csv(f'C:\PythonProjects\RE_model_env\scraped data\{type}\{date}.csv'))
