@@ -3,7 +3,8 @@ import math
 import requests
 from bs4 import BeautifulSoup
 import datetime
-#import psycopg2
+import psycopg2
+
 
 
 def RE(type):
@@ -70,7 +71,7 @@ def RE(type):
             except:
                 prices.append(int())
             
-            #get spac
+            #get spac   
             try:
                 space.append(int(param_df.loc['Plot space'].tolist()[0].replace('m²', '').replace(',','')))
             except:
@@ -113,7 +114,7 @@ def RE(type):
 
     # df na grafy a visualizace
 
-    df = pd.DataFrame(list(zip(property_names, prices, distances, space, loc_lat, loc_lng))).rename(columns={0:"Property names", 1:"Prices in CZK", 2:"distance in Km", 3:"Space in m²", 4:"Lat", 5:"Lng"}).set_index("Property names")
+    df = pd.DataFrame(list(zip(property_names, prices, distances, space, loc_lat, loc_lng))).rename(columns={0:"Property names", 1:"Prices in CZK", 2:"distance in Km", 3:"Space in m²", 4:"Lat", 5:"Lng"})
 
     #price in 1 m²
     p1ms =  []
@@ -123,8 +124,44 @@ def RE(type):
         
     df['price_for_m²'] = p1ms
 
-    #Save df in google drive
+    #SAVE DATA IN PG
     date = datetime.datetime.today().strftime('%Y-%m-%d')
+
+    conn = psycopg2.connect(
+    host = "localhost",
+    database = f"{type}",
+    user = "postgres",
+    password = "1234",
+    )
+    #cursor
+    cur = conn.cursor()
+
+    #create table
+    cur.execute(
+                f"""CREATE TABLE "{date}"
+                    (
+                        Name text NOT NULL,
+                        Price bigint NOT NULL,
+                        Distance numeric NOT NULL,
+                        Space numeric,
+                        Lat numeric,
+                        Lng numeric,
+                        Price_mSqr numeric,
+                        PRIMARY KEY (Name)
+                    )
+                """   
+                )
+    #conn.commit()
+    for i in range(len(df)):
+        cur.execute(
+            f"""
+            INSERT INTO "{date}"(Name, Price, Distance, Space, Lat, Lng, Price_mSqr)
+            VALUES ({i+1},{df.iloc[:,1][i]},{df.iloc[:,2][i]},{df.iloc[:,3][i]},{df.iloc[:,4][i]},{df.iloc[:,5][i]}, {df.iloc[:,6][i]})
+            
+            """
+        )
+    conn.commit()
+    conn.close()
     
     
-    return(df.to_csv(f'C:\PythonProjects\RE_model_env\scraped data\{type}\{date}.csv'))
+    return('done')
